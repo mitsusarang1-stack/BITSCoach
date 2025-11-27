@@ -76,6 +76,9 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --user-bubble-bg: #F2E8DF;        /* light sand for light mode */
+  --user-bubble-text: #1A1410;      /* deep brown */
+  --user-bubble-border: #E9D8C8;    /* subtle border */
 }
 
 .dark {
@@ -110,6 +113,9 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --user-bubble-bg: #2A1E18;        /* warm cocoa */
+  --user-bubble-text: #F5E1C8;      /* warm sand */
+  --user-bubble-border: #3A2A22;    /* subtle dusk border */
 }
 
 @layer base {
