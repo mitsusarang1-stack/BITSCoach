@@ -24,6 +24,8 @@ const formSchema = z.object({
   message: z.string().min(1, "Message cannot be empty.").max(2000),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 const STORAGE_KEY = "chat-messages";
 
 type StorageData = {
@@ -31,7 +33,7 @@ type StorageData = {
   durations: Record<string, number>;
 };
 
-const loadMessagesFromStorage = () => {
+const loadMessagesFromStorage = (): StorageData => {
   if (typeof window === "undefined") return { messages: [], durations: {} };
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -47,20 +49,31 @@ const loadMessagesFromStorage = () => {
   }
 };
 
-const saveMessagesToStorage = (messages: UIMessage[], durations: Record<string, number>) => {
+const saveMessagesToStorage = (
+  messages: UIMessage[],
+  durations: Record<string, number>
+) => {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages, durations }));
+  const data: StorageData = { messages, durations };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 };
 
 export default function Chat() {
   const [isClient, setIsClient] = useState(false);
   const welcomeShownRef = useRef(false);
-  const stored = typeof window !== "undefined" ? loadMessagesFromStorage() : { messages: [], durations: {} };
+  const stored =
+    typeof window !== "undefined"
+      ? loadMessagesFromStorage()
+      : { messages: [], durations: {} };
 
-  const [initialMessages] = useState(stored.messages);
-  const [durations, setDurations] = useState<Record<string, number>>(stored.durations);
+  const [initialMessages] = useState<UIMessage[]>(stored.messages);
+  const [durations, setDurations] = useState<Record<string, number>>(
+    stored.durations
+  );
 
-  const { messages, sendMessage, status, stop, setMessages } = useChat({ messages: initialMessages });
+  const { messages, sendMessage, status, stop, setMessages } = useChat({
+    messages: initialMessages,
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -85,12 +98,12 @@ export default function Chat() {
     }
   }, [isClient, initialMessages.length, setMessages]);
 
-  const form = useForm({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { message: "" },
   });
 
-  function onSubmit(data) {
+  function onSubmit(data: FormValues) {
     sendMessage({ text: data.message });
     form.reset();
   }
@@ -104,36 +117,33 @@ export default function Chat() {
 
   return (
     <div className="flex h-screen items-center justify-center font-sans bg-[#0D0A07] text-slate-50">
+      {/* Global CSS tweak to kill the white bubble + style user messages */}
       <style jsx global>{`
-        /* GLOBAL FIX → beautifully styled user bubble */
         .user-message-bubble,
         .message-user,
         .user-bubble,
         .chat-message-user {
-          background: #2A1E18 !important;
-          border: 1px solid #3A2A22 !important;
-          color: #F5E1C8 !important;
+          background: #2a1e18 !important;
+          border: 1px solid #3a2a22 !important;
+          color: #f5e1c8 !important;
           border-radius: 14px !important;
           padding: 10px 14px !important;
         }
 
-        /* Assistant bubble if needed */
         .assistant-message-bubble,
         .message-assistant {
-          background: #1A1410 !important;
-          border: 1px solid #31261B !important;
-          color: #F5E1C8 !important;
+          background: #1a1410 !important;
+          border: 1px solid #31261b !important;
+          color: #f5e1c8 !important;
         }
 
-        /* Remove the white bubble glitch */
         .bg-white {
-          background: #2A1E18 !important;
-          color: #F5E1C8 !important;
+          background: #2a1e18 !important;
+          color: #f5e1c8 !important;
         }
       `}</style>
 
       <main className="relative h-screen w-full">
-
         {/* Header */}
         <div className="fixed left-0 right-0 top-0 z-50 border-b border-[#31261B] bg-[#0D0A07]/90 backdrop-blur">
           <ChatHeader>
@@ -149,7 +159,9 @@ export default function Chat() {
                 <p className="text-sm font-semibold tracking-tight">
                   Chat with {AI_NAME}
                 </p>
-                <p className="text-[11px] text-[#D8C2A8]">BITSoM domain-wise interview prep</p>
+                <p className="text-[11px] text-[#D8C2A8]">
+                  BITSoM domain-wise interview prep
+                </p>
               </div>
             </ChatHeaderBlock>
 
@@ -172,7 +184,9 @@ export default function Chat() {
           <div className="flex min-h-full flex-col items-center justify-end">
             <div className="w-full max-w-3xl space-y-3">
               <section className="rounded-2xl border border-[#31261B] bg-[#0D0A07]/80 px-4 py-3 text-xs text-[#F5E1C8]">
-                Ask me about <b>Marketing</b>, <b>Consulting</b>, <b>Ops & GenMan</b>, or <b>Product</b> interviews.
+                Ask me about <b>Marketing</b>, <b>Consulting</b>,{" "}
+                <b>Ops &amp; GenMan</b>, or <b>Product</b> interviews. I’ll help
+                with process, likely questions, and structuring your answers.
               </section>
 
               <section className="rounded-2xl border border-[#31261B] bg-[#1A1410]/90 px-3 py-4 md:px-4">
@@ -181,17 +195,21 @@ export default function Chat() {
                     messages={messages}
                     status={status}
                     durations={durations}
-                    onDurationChange={(k, d) =>
+                    onDurationChange={(k: string, d: number) =>
                       setDurations((prev) => ({ ...prev, [k]: d }))
                     }
                   />
                 ) : (
-                  <Loader2 className="size-4 animate-spin text-[#D8C2A8]" />
+                  <div className="flex w-full justify-center">
+                    <Loader2 className="size-4 animate-spin text-[#D8C2A8]" />
+                  </div>
                 )}
               </section>
 
               <p className="text-[10px] text-[#D8C2A8]">
-                Note: Assistant uses anonymised student interview notes. Always cross-check with placement updates.
+                Note: This assistant is based on anonymised past student
+                interviews and public information. Processes can change—always
+                cross-check with the latest placement communication.
               </p>
             </div>
           </div>
@@ -208,13 +226,17 @@ export default function Chat() {
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel className="sr-only">Message</FieldLabel>
+                        <FieldLabel className="sr-only">
+                          Message
+                        </FieldLabel>
                         <div className="relative">
                           <Input
                             {...field}
                             className="h-12 rounded-2xl border border-[#31261B] bg-[#1A1410]/90 pr-14 pl-4 text-sm text-slate-50 placeholder:text-[#D8C2A8]/70"
                             placeholder="Ask about your upcoming interview…"
                             disabled={status === "streaming"}
+                            aria-invalid={fieldState.invalid}
+                            autoComplete="off"
                             onKeyDown={(e) => {
                               if (e.key === "Enter" && !e.shiftKey) {
                                 e.preventDefault();
@@ -224,20 +246,23 @@ export default function Chat() {
                           />
                           {(status === "ready" || status === "error") && (
                             <Button
-                              type="submit"
                               className="absolute right-2 top-1.5 rounded-full bg-[#FF6A2D] text-black hover:bg-[#FFB08A]"
+                              type="submit"
                               disabled={!field.value.trim()}
                               size="icon"
                             >
                               <ArrowUp className="size-4" />
                             </Button>
                           )}
-                          {(status === "streaming" || status === "submitted") && (
+                          {(status === "streaming" ||
+                            status === "submitted") && (
                             <Button
-                              className="absolute right-2 top-1.5 rounded-full bg-[#31261B]"
+                              className="absolute right-2 top-1.5 rounded-full bg-[#31261B] hover:bg-[#4A3827]"
                               size="icon"
                               type="button"
-                              onClick={stop}
+                              onClick={() => {
+                                stop();
+                              }}
                             >
                               <Square className="size-4" />
                             </Button>
@@ -252,9 +277,15 @@ export default function Chat() {
           </div>
 
           <div className="flex w-full items-center justify-center px-5 py-3 text-xs text-[#D8C2A8]">
-            © {new Date().getFullYear()} {OWNER_NAME}&nbsp;
-            <Link href="/terms" className="underline">Terms of Use</Link>
-            &nbsp;Powered by <Link className="underline" href="https://ringel.ai/">Ringel.AI</Link>
+            © {new Date().getFullYear()} {OWNER_NAME}
+            &nbsp;
+            <Link href="/terms" className="underline">
+              Terms of Use
+            </Link>
+            &nbsp;Powered by&nbsp;
+            <Link href="https://ringel.ai/" className="underline">
+              Ringel.AI
+            </Link>
           </div>
         </div>
       </main>
