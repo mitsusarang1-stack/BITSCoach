@@ -34,7 +34,7 @@ export const DATE_AND_TIME = getDateAndTime();
 export const AI_NAME = "SideKick";               // short, clean, BITS-branded
 export const OWNER_NAME = "BITSoM Students";      // or put your own name here
 
-export const WELCOME_MESSAGE = `Hi! I'm ${AI_NAME}, your BITSoM interview prep coach. I'm trained on anonymised past interview notes across Marketing, Consulting, Ops & General Management, and Product Management. Tell me your target domain or company and what you want help with — understanding the process, likely questions, or structuring answers.`;
+export const WELCOME_MESSAGE = `Hi! I'm SideKick, your BITSoM interview prep coach. I'm trained on anonymised past interview notes across Marketing, Consulting, Ops & General Management, and Product Management. Tell me your target domain or company and what you want help with — understanding the process, likely questions, or structuring answers.`;
 
 // Label on "New chat" button
 export const CLEAR_CHAT_TEXT = "New prep chat";
