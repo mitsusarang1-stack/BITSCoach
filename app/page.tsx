@@ -146,15 +146,15 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex h-screen items-center justify-center font-sans bg-slate-950 text-slate-50">
+    <div className="flex h-screen items-center justify-center font-sans bg-[#0B0B0B] text-neutral-100">
       <main className="relative h-screen w-full">
         {/* Top header */}
-        <div className="fixed left-0 right-0 top-0 z-50 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+        <div className="fixed left-0 right-0 top-0 z-50 border-b border-[#2E2E2E] bg-[#0B0B0B]/90 backdrop-blur">
           <div className="relative">
             <ChatHeader>
               <ChatHeaderBlock />
               <ChatHeaderBlock className="items-center justify-center gap-2">
-                <Avatar className="size-8 ring-1 ring-emerald-500/70">
+                <Avatar className="size-8 ring-1 ring-[#4EA8FF]/60">
                   <AvatarImage src="/logo.png" />
                   <AvatarFallback>
                     <Image
@@ -169,20 +169,20 @@ export default function Chat() {
                   <p className="text-sm font-semibold tracking-tight">
                     Chat with {AI_NAME}
                   </p>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-[#A3A3A3]">
                     BITSoM domain-wise interview prep
                   </p>
                 </div>
               </ChatHeaderBlock>
               <ChatHeaderBlock className="justify-end gap-2">
-                <span className="hidden items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-200 md:inline-flex">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                <span className="hidden items-center gap-1 rounded-full border border-[#4EA8FF]/40 bg-[#4EA8FF]/10 px-2 py-0.5 text-[10px] text-[#B9DCFF] md:inline-flex">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#4EA8FF]" />
                   Live · GPT-4.1
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="cursor-pointer border-slate-700 bg-slate-900/80 text-xs"
+                  className="cursor-pointer border-[#2E2E2E] bg-[#1A1A1A]/90 text-xs text-neutral-100 hover:bg-[#262626]"
                   onClick={clearChat}
                 >
                   <Plus className="mr-1 size-4" />
@@ -198,7 +198,7 @@ export default function Chat() {
           <div className="flex min-h-full flex-col items-center justify-end">
             <div className="w-full max-w-3xl space-y-3">
               {/* Small intro + domain hints */}
-              <section className="rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-xs text-slate-300 shadow-[0_0_40px_rgba(15,23,42,0.8)]">
+              <section className="rounded-2xl border border-[#2E2E2E] bg-[#1A1A1A]/90 px-4 py-3 text-xs text-neutral-200 shadow-[0_0_40px_rgba(0,0,0,0.7)]">
                 <p className="mb-2">
                   Ask me about{" "}
                   <span className="font-semibold">Marketing</span>,{" "}
@@ -208,18 +208,18 @@ export default function Chat() {
                   I&apos;ll help with process, likely questions, and
                   structuring your answers.
                 </p>
-                <div className="flex flex-wrap gap-1.5 text-[11px]">
-                  <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5">
+                <div className="flex flex-wrap gap-1.5 text-[11px] text-[#A3A3A3]">
+                  <span className="rounded-full border border-[#2E2E2E] bg-[#1A1A1A] px-2 py-0.5">
                     “What does the BigBasket marketing process look like?”
                   </span>
-                  <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5">
+                  <span className="rounded-full border border-[#2E2E2E] bg-[#1A1A1A] px-2 py-0.5">
                     “Give me 5 consulting questions and how to structure them.”
                   </span>
                 </div>
               </section>
 
               {/* Chat card */}
-              <section className="rounded-2xl border border-slate-800 bg-slate-950/70 px-3 py-4 md:px-4">
+              <section className="rounded-2xl border border-[#2E2E2E] bg-[#1A1A1A] px-3 py-4 md:px-4">
                 <div className="flex flex-col items-center justify-end">
                   {isClient ? (
                     <>
@@ -230,20 +230,20 @@ export default function Chat() {
                         onDurationChange={handleDurationChange}
                       />
                       {status === "submitted" && (
-                        <div className="mt-2 flex w-full max-w-3xl justify-start text-slate-400">
+                        <div className="mt-2 flex w-full max-w-3xl justify-start text-[#A3A3A3]">
                           <Loader2 className="size-4 animate-spin" />
                         </div>
                       )}
                     </>
                   ) : (
                     <div className="flex w-full max-w-2xl justify-center">
-                      <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                      <Loader2 className="size-4 animate-spin text-[#A3A3A3]" />
                     </div>
                   )}
                 </div>
               </section>
 
-              <p className="text-[10px] text-slate-500">
+              <p className="text-[10px] text-[#737373]">
                 Note: This assistant is based on anonymised past student
                 interviews and public information. Processes can change—always
                 cross-check with the latest placement communication.
@@ -253,7 +253,7 @@ export default function Chat() {
         </div>
 
         {/* Bottom input area */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent pt-13">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-[#0B0B0B] via-[#0B0B0B]/85 to-transparent pt-13">
           <div className="flex w-full items-center justify-center px-5 pt-5 pb-1">
             <div className="message-fade-overlay" />
             <div className="w-full max-w-3xl">
@@ -274,7 +274,7 @@ export default function Chat() {
                           <Input
                             {...field}
                             id="chat-form-message"
-                            className="h-12 rounded-2xl border border-slate-700 bg-slate-900/90 pr-14 pl-4 text-sm placeholder:text-slate-500"
+                            className="h-12 rounded-2xl border border-[#2E2E2E] bg-[#1A1A1A]/95 pr-14 pl-4 text-sm text-neutral-100 placeholder:text-[#737373]"
                             placeholder="Ask about your upcoming interview…"
                             disabled={status === "streaming"}
                             aria-invalid={fieldState.invalid}
@@ -288,18 +288,18 @@ export default function Chat() {
                           />
                           {(status === "ready" || status === "error") && (
                             <Button
-                              className="absolute right-2 top-1.5 rounded-full bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+                              className="absolute right-2 top-1.5 rounded-full bg-[#4EA8FF] text-black hover:bg-[#82C5FF]"
                               type="submit"
                               disabled={!field.value.trim()}
                               size="icon"
                             >
-                              <ArrowUp className="size-4" />
+                                <ArrowUp className="size-4" />
                             </Button>
                           )}
                           {(status === "streaming" ||
                             status === "submitted") && (
                             <Button
-                              className="absolute right-2 top-1.5 rounded-full bg-slate-800 hover:bg-slate-700"
+                              className="absolute right-2 top-1.5 rounded-full bg-[#2E2E2E] text-neutral-100 hover:bg-[#404040]"
                               size="icon"
                               type="button"
                               onClick={() => {
@@ -317,7 +317,7 @@ export default function Chat() {
               </form>
             </div>
           </div>
-          <div className="flex w-full items-center justify-center px-5 py-3 text-xs text-muted-foreground">
+          <div className="flex w-full items-center justify-center px-5 py-3 text-xs text-[#737373]">
             © {new Date().getFullYear()} {OWNER_NAME}&nbsp;
             <Link href="/terms" className="underline">
               Terms of Use
