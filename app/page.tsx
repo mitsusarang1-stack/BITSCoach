@@ -21,10 +21,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 const formSchema = z.object({
-  message: z
-    .string()
-    .min(1, "Message cannot be empty.")
-    .max(2000, "Message must be at most 2000 characters."),
+  message: z.string().min(1, "Message cannot be empty.").max(2000),
 });
 
 const STORAGE_KEY = "chat-messages";
@@ -34,53 +31,36 @@ type StorageData = {
   durations: Record<string, number>;
 };
 
-const loadMessagesFromStorage = (): {
-  messages: UIMessage[];
-  durations: Record<string, number>;
-} => {
+const loadMessagesFromStorage = () => {
   if (typeof window === "undefined") return { messages: [], durations: {} };
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return { messages: [], durations: {} };
-
     const parsed = JSON.parse(stored);
     return {
       messages: parsed.messages || [],
       durations: parsed.durations || {},
     };
-  } catch (error) {
-    console.error("Failed to load messages from localStorage:", error);
+  } catch (e) {
+    console.error("Failed to load from storage:", e);
     return { messages: [], durations: {} };
   }
 };
 
-const saveMessagesToStorage = (
-  messages: UIMessage[],
-  durations: Record<string, number>
-) => {
+const saveMessagesToStorage = (messages: UIMessage[], durations: Record<string, number>) => {
   if (typeof window === "undefined") return;
-  try {
-    const data: StorageData = { messages, durations };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (error) {
-    console.error("Failed to save messages to localStorage:", error);
-  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages, durations }));
 };
 
 export default function Chat() {
   const [isClient, setIsClient] = useState(false);
-  const [durations, setDurations] = useState<Record<string, number>>({});
-  const welcomeMessageShownRef = useRef<boolean>(false);
+  const welcomeShownRef = useRef(false);
+  const stored = typeof window !== "undefined" ? loadMessagesFromStorage() : { messages: [], durations: {} };
 
-  const stored =
-    typeof window !== "undefined"
-      ? loadMessagesFromStorage()
-      : { messages: [], durations: {} };
-  const [initialMessages] = useState<UIMessage[]>(stored.messages);
+  const [initialMessages] = useState(stored.messages);
+  const [durations, setDurations] = useState<Record<string, number>>(stored.durations);
 
-  const { messages, sendMessage, status, stop, setMessages } = useChat({
-    messages: initialMessages,
-  });
+  const { messages, sendMessage, status, stop, setMessages } = useChat({ messages: initialMessages });
 
   useEffect(() => {
     setIsClient(true);
@@ -89,196 +69,152 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
-    if (isClient) {
-      saveMessagesToStorage(messages, durations);
-    }
-  }, [durations, messages, isClient]);
-
-  const handleDurationChange = (key: string, duration: number) => {
-    setDurations((prevDurations) => {
-      const newDurations = { ...prevDurations };
-      newDurations[key] = duration;
-      return newDurations;
-    });
-  };
+    if (isClient) saveMessagesToStorage(messages, durations);
+  }, [messages, durations, isClient]);
 
   useEffect(() => {
-    if (
-      isClient &&
-      initialMessages.length === 0 &&
-      !welcomeMessageShownRef.current
-    ) {
-      const welcomeMessage: UIMessage = {
+    if (isClient && initialMessages.length === 0 && !welcomeShownRef.current) {
+      const welcomeMsg: UIMessage = {
         id: `welcome-${Date.now()}`,
         role: "assistant",
-        parts: [
-          {
-            type: "text",
-            text: WELCOME_MESSAGE,
-          },
-        ],
+        parts: [{ type: "text", text: WELCOME_MESSAGE }],
       };
-      setMessages([welcomeMessage]);
-      saveMessagesToStorage([welcomeMessage], {});
-      welcomeMessageShownRef.current = true;
+      setMessages([welcomeMsg]);
+      saveMessagesToStorage([welcomeMsg], {});
+      welcomeShownRef.current = true;
     }
   }, [isClient, initialMessages.length, setMessages]);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      message: "",
-    },
+    defaultValues: { message: "" },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
+  function onSubmit(data) {
     sendMessage({ text: data.message });
     form.reset();
   }
 
   function clearChat() {
-    const newMessages: UIMessage[] = [];
-    const newDurations = {};
-    setMessages(newMessages);
-    setDurations(newDurations);
-    saveMessagesToStorage(newMessages, newDurations);
+    setMessages([]);
+    setDurations({});
+    saveMessagesToStorage([], {});
     toast.success("Chat cleared");
   }
 
   return (
     <div className="flex h-screen items-center justify-center font-sans bg-[#0D0A07] text-slate-50">
+      <style jsx global>{`
+        /* GLOBAL FIX → beautifully styled user bubble */
+        .user-message-bubble,
+        .message-user,
+        .user-bubble,
+        .chat-message-user {
+          background: #2A1E18 !important;
+          border: 1px solid #3A2A22 !important;
+          color: #F5E1C8 !important;
+          border-radius: 14px !important;
+          padding: 10px 14px !important;
+        }
+
+        /* Assistant bubble if needed */
+        .assistant-message-bubble,
+        .message-assistant {
+          background: #1A1410 !important;
+          border: 1px solid #31261B !important;
+          color: #F5E1C8 !important;
+        }
+
+        /* Remove the white bubble glitch */
+        .bg-white {
+          background: #2A1E18 !important;
+          color: #F5E1C8 !important;
+        }
+      `}</style>
+
       <main className="relative h-screen w-full">
-        {/* Top header */}
+
+        {/* Header */}
         <div className="fixed left-0 right-0 top-0 z-50 border-b border-[#31261B] bg-[#0D0A07]/90 backdrop-blur">
-          <div className="relative">
-            <ChatHeader>
-              <ChatHeaderBlock />
-              <ChatHeaderBlock className="items-center justify-center gap-2">
-                <Avatar className="size-8 ring-1 ring-[#FF6A2D]/80">
-                  <AvatarImage src="/logo.png" />
-                  <AvatarFallback>
-                    <Image
-                      src="/logo.png"
-                      alt="Logo"
-                      width={36}
-                      height={36}
-                    />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <p className="text-sm font-semibold tracking-tight">
-                    Chat with {AI_NAME}
-                  </p>
-                  <p className="text-[11px] text-[#D8C2A8]">
-                    BITSoM domain-wise interview prep
-                  </p>
-                </div>
-              </ChatHeaderBlock>
-              <ChatHeaderBlock className="justify-end gap-2">
-                <span className="hidden items-center gap-1 rounded-full border border-[#FF6A2D]/40 bg-[#FF6A2D]/10 px-2 py-0.5 text-[10px] text-[#FFB08A] md:inline-flex">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#FF6A2D]" />
-                  Live · GPT-4.1
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="cursor-pointer border-[#31261B] bg-[#1A1410]/80 text-xs text-[#D8C2A8]"
-                  onClick={clearChat}
-                >
-                  <Plus className="mr-1 size-4" />
-                  {CLEAR_CHAT_TEXT}
-                </Button>
-              </ChatHeaderBlock>
-            </ChatHeader>
-          </div>
+          <ChatHeader>
+            <ChatHeaderBlock />
+            <ChatHeaderBlock className="items-center justify-center gap-2">
+              <Avatar className="size-8 ring-1 ring-[#FF6A2D]/80">
+                <AvatarImage src="/logo.png" />
+                <AvatarFallback>
+                  <Image src="/logo.png" alt="Logo" width={36} height={36} />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-semibold tracking-tight">
+                  Chat with {AI_NAME}
+                </p>
+                <p className="text-[11px] text-[#D8C2A8]">BITSoM domain-wise interview prep</p>
+              </div>
+            </ChatHeaderBlock>
+
+            <ChatHeaderBlock className="justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="cursor-pointer border-[#31261B] bg-[#1A1410]/80 text-xs text-[#D8C2A8]"
+                onClick={clearChat}
+              >
+                <Plus className="mr-1 size-4" />
+                {CLEAR_CHAT_TEXT}
+              </Button>
+            </ChatHeaderBlock>
+          </ChatHeader>
         </div>
 
-        {/* Scrollable chat area */}
+        {/* Chat Area */}
         <div className="h-screen w-full overflow-y-auto px-5 pt-[88px] pb-[150px]">
           <div className="flex min-h-full flex-col items-center justify-end">
             <div className="w-full max-w-3xl space-y-3">
-              {/* Small intro + domain hints */}
-              <section className="rounded-2xl border border-[#31261B] bg-[#0D0A07]/80 px-4 py-3 text-xs text-[#F5E1C8] shadow-[0_0_40px_rgba(13,10,7,0.9)]">
-                <p className="mb-2">
-                  Ask me about{" "}
-                  <span className="font-semibold">Marketing</span>,{" "}
-                  <span className="font-semibold">Consulting</span>,{" "}
-                  <span className="font-semibold">Ops &amp; GenMan</span>, or{" "}
-                  <span className="font-semibold">Product</span> interviews.
-                  I&apos;ll help with process, likely questions, and
-                  structuring your answers.
-                </p>
-                <div className="flex flex-wrap gap-1.5 text-[11px]">
-                  <span className="rounded-full border border-[#31261B] bg-[#1A1410] px-2 py-0.5">
-                    “What does the BigBasket marketing process look like?”
-                  </span>
-                  <span className="rounded-full border border-[#31261B] bg-[#1A1410] px-2 py-0.5">
-                    “Give me 5 consulting questions and how to structure them.”
-                  </span>
-                </div>
+              <section className="rounded-2xl border border-[#31261B] bg-[#0D0A07]/80 px-4 py-3 text-xs text-[#F5E1C8]">
+                Ask me about <b>Marketing</b>, <b>Consulting</b>, <b>Ops & GenMan</b>, or <b>Product</b> interviews.
               </section>
 
-              {/* Chat card */}
               <section className="rounded-2xl border border-[#31261B] bg-[#1A1410]/90 px-3 py-4 md:px-4">
-                <div className="flex flex-col items-center justify-end">
-                  {isClient ? (
-                    <>
-                      <MessageWall
-                        messages={messages}
-                        status={status}
-                        durations={durations}
-                        onDurationChange={handleDurationChange}
-                      />
-                      {status === "submitted" && (
-                        <div className="mt-2 flex w-full max-w-3xl justify-start text-[#D8C2A8]">
-                          <Loader2 className="size-4 animate-spin" />
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex w-full max-w-2xl justify-center">
-                      <Loader2 className="size-4 animate-spin text-[#D8C2A8]" />
-                    </div>
-                  )}
-                </div>
+                {isClient ? (
+                  <MessageWall
+                    messages={messages}
+                    status={status}
+                    durations={durations}
+                    onDurationChange={(k, d) =>
+                      setDurations((prev) => ({ ...prev, [k]: d }))
+                    }
+                  />
+                ) : (
+                  <Loader2 className="size-4 animate-spin text-[#D8C2A8]" />
+                )}
               </section>
 
               <p className="text-[10px] text-[#D8C2A8]">
-                Note: This assistant is based on anonymised past student
-                interviews and public information. Processes can change—always
-                cross-check with the latest placement communication.
+                Note: Assistant uses anonymised student interview notes. Always cross-check with placement updates.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Bottom input area */}
+        {/* Input */}
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-[#0D0A07] via-[#0D0A07]/80 to-transparent pt-13">
           <div className="flex w-full items-center justify-center px-5 pt-5 pb-1">
-            <div className="message-fade-overlay" />
             <div className="w-full max-w-3xl">
-              <form id="chat-form" onSubmit={form.handleSubmit(onSubmit)}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
                 <FieldGroup>
                   <Controller
                     name="message"
                     control={form.control}
                     render={({ field, fieldState }) => (
                       <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel
-                          htmlFor="chat-form-message"
-                          className="sr-only"
-                        >
-                          Message
-                        </FieldLabel>
+                        <FieldLabel className="sr-only">Message</FieldLabel>
                         <div className="relative">
                           <Input
                             {...field}
-                            id="chat-form-message"
                             className="h-12 rounded-2xl border border-[#31261B] bg-[#1A1410]/90 pr-14 pl-4 text-sm text-slate-50 placeholder:text-[#D8C2A8]/70"
                             placeholder="Ask about your upcoming interview…"
                             disabled={status === "streaming"}
-                            aria-invalid={fieldState.invalid}
-                            autoComplete="off"
                             onKeyDown={(e) => {
                               if (e.key === "Enter" && !e.shiftKey) {
                                 e.preventDefault();
@@ -288,23 +224,20 @@ export default function Chat() {
                           />
                           {(status === "ready" || status === "error") && (
                             <Button
-                              className="absolute right-2 top-1.5 rounded-full bg-[#FF6A2D] text-black hover:bg-[#FFB08A]"
                               type="submit"
+                              className="absolute right-2 top-1.5 rounded-full bg-[#FF6A2D] text-black hover:bg-[#FFB08A]"
                               disabled={!field.value.trim()}
                               size="icon"
                             >
                               <ArrowUp className="size-4" />
                             </Button>
                           )}
-                          {(status === "streaming" ||
-                            status === "submitted") && (
+                          {(status === "streaming" || status === "submitted") && (
                             <Button
-                              className="absolute right-2 top-1.5 rounded-full bg-[#31261B] hover:bg-[#4A3827]"
+                              className="absolute right-2 top-1.5 rounded-full bg-[#31261B]"
                               size="icon"
                               type="button"
-                              onClick={() => {
-                                stop();
-                              }}
+                              onClick={stop}
                             >
                               <Square className="size-4" />
                             </Button>
@@ -317,15 +250,11 @@ export default function Chat() {
               </form>
             </div>
           </div>
+
           <div className="flex w-full items-center justify-center px-5 py-3 text-xs text-[#D8C2A8]">
             © {new Date().getFullYear()} {OWNER_NAME}&nbsp;
-            <Link href="/terms" className="underline">
-              Terms of Use
-            </Link>
-            &nbsp;Powered by&nbsp;
-            <Link href="https://ringel.ai/" className="underline">
-              Ringel.AI
-            </Link>
+            <Link href="/terms" className="underline">Terms of Use</Link>
+            &nbsp;Powered by <Link className="underline" href="https://ringel.ai/">Ringel.AI</Link>
           </div>
         </div>
       </main>
